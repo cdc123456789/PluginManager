@@ -1,0 +1,77 @@
+import groovy.json.JsonSlurper
+
+plugins {
+    id "java"
+    id "idea"
+}
+
+repositories {
+    mavenCentral()
+    maven { url = "https://repo.gradle.org/gradle/libs-releases" } // for gradle-tooling-api
+    flatDir { dirs mcreator_path + '/lib' }
+}
+
+group = 'net.mcreator.demojavaplugin'
+version = new JsonSlurper().parse(file('src/main/resources/plugin.json'))['info']['version']
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+configurations {
+    implementation.extendsFrom export
+}
+
+dependencies {
+    implementation project(':MCreator')
+
+    // Use "export" configuration for dependencies that should be included in the plugin (if MCreator does not provide them)
+    // export group: 'org.example', name: 'example-library', version: '1.2.3'
+}
+
+// MCreator's build script configures idea.project, which only exists on the root project. As MCreator is included
+// here as a subproject, share this root project's IDEA project model with it so its configuration does not fail
+project(':MCreator').plugins.withType(IdeaPlugin).configureEach { ideaPlugin ->
+    ideaPlugin.model.project = rootProject.idea.project
+}
+
+// Re-export MCreator's implementation dependencies to this project once the MCreator project is evaluated
+rootProject.project(':MCreator').afterEvaluate { mcreator ->
+    mcreator.configurations.named("implementation").get().dependencies.each { dep ->
+        dependencies.add("implementation", dep)
+    }
+}
+
+tasks.jar {
+    archiveFileName.set("demo-plugin.zip")
+
+    from {
+        configurations.export.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+tasks.register('runMCreatorWithPlugin', JavaExec) {
+    dependsOn jar
+
+    environment("MCREATOR_PLUGINS_FOLDER", file("./build/libs"))
+
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+
+    classpath = project(':MCreator').sourceSets.main.runtimeClasspath
+
+    mainClass = 'net.mcreator.Launcher'
+
+    workingDir = mcreator_path
+}
+
+subprojects { subproject ->
+    subproject.plugins.withType(JavaPlugin).tap {
+        configureEach {
+            test {
+                dependsOn rootProject.jar
+
+                environment("MCREATOR_PLUGINS_FOLDER", new File(rootProject.projectDir, "/build/libs"))
+
+                workingDir = mcreator_path
+            }
+        }
+    }
+}
