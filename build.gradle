@@ -1,77 +1,65 @@
-import groovy.json.JsonSlurper
-
 plugins {
     id "java"
-    id "idea"
 }
 
 repositories {
     mavenCentral()
-    maven { url = "https://repo.gradle.org/gradle/libs-releases" } // for gradle-tooling-api
-    flatDir { dirs mcreator_path + '/lib' }
+    maven { url "https://repo.gradle.org/gradle/libs-releases" } // for gradle-tooling-api
+    maven {
+        url "https://jitpack.io"
+    }
+    mavenLocal()
 }
 
-group = 'net.mcreator.demojavaplugin'
-version = new JsonSlurper().parse(file('src/main/resources/plugin.json'))['info']['version']
+group = 'org.cdc.pluginmanager'
+version = "1.0.0"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 configurations {
-    implementation.extendsFrom export
+    implementation.extendsFrom jarInJar
 }
 
 dependencies {
-    implementation project(':MCreator')
-
-    // Use "export" configuration for dependencies that should be included in the plugin (if MCreator does not provide them)
-    // export group: 'org.example', name: 'example-library', version: '1.2.3'
-}
-
-// MCreator's build script configures idea.project, which only exists on the root project. As MCreator is included
-// here as a subproject, share this root project's IDEA project model with it so its configuration does not fail
-project(':MCreator').plugins.withType(IdeaPlugin).configureEach { ideaPlugin ->
-    ideaPlugin.model.project = rootProject.idea.project
-}
-
-// Re-export MCreator's implementation dependencies to this project once the MCreator project is evaluated
-rootProject.project(':MCreator').afterEvaluate { mcreator ->
-    mcreator.configurations.named("implementation").get().dependencies.each { dep ->
-        dependencies.add("implementation", dep)
+    implementation "org.jboss.forge.roaster:roaster-api:2.31.1.Final"
+    implementation "org.jboss.forge.roaster:roaster-jdt:2.31.1.Final"
+    implementation "org.snakeyaml:snakeyaml-engine:3.0.1"
+    implementation "com.fifesoft:rsyntaxtextarea:3.6.3"
+    implementation "com.fifesoft:autocomplete:3.3.3"
+    implementation "commons-io:commons-io:2.22.0"
+    implementation "org.apache.commons:commons-lang3:3.20.0"
+    implementation "org.apache.commons:commons-text:1.15.0"
+    implementation "com.formdev:flatlaf:3.7.1:no-natives"
+    implementation "org.apache.logging.log4j:log4j-core:2.26.1"
+    implementation "org.freemarker:freemarker:2.3.34"
+    implementation 'net.mcreator:MCreator:2026.2'
+    implementation("com.google.code.gson:gson:2.14.0") {
+        dep -> dep.exclude group: 'com.google.errorprone', module: 'error_prone_annotations'
     }
+
+    compileOnly 'org.jetbrains:annotations:26.1.0'
+//    jarInJar('com.github.javaparser:javaparser-symbol-solver-core:3.28.1'){
+//        exclude group:'org.javassist'
+//        exclude group:'com.google.guava'
+//    }
+}
+
+configurations.jarInJar {
+    canBeConsumed = true
+    canBeResolved = true
+}
+
+processResources {
+    filesMatching('plugin.json') {
+        expand('version': version)
+    }
+
 }
 
 tasks.jar {
-    archiveFileName.set("demo-plugin.zip")
+    archiveFileName.set('plugin-generator-' + version + '.zip')
 
-    from {
-        configurations.export.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-}
-
-tasks.register('runMCreatorWithPlugin', JavaExec) {
-    dependsOn jar
-
-    environment("MCREATOR_PLUGINS_FOLDER", file("./build/libs"))
-
-    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
-
-    classpath = project(':MCreator').sourceSets.main.runtimeClasspath
-
-    mainClass = 'net.mcreator.Launcher'
-
-    workingDir = mcreator_path
-}
-
-subprojects { subproject ->
-    subproject.plugins.withType(JavaPlugin).tap {
-        configureEach {
-            test {
-                dependsOn rootProject.jar
-
-                environment("MCREATOR_PLUGINS_FOLDER", new File(rootProject.projectDir, "/build/libs"))
-
-                workingDir = mcreator_path
-            }
-        }
+    from(project.configurations.jarInJar) {
+        into 'META-INF/jarinjar'
     }
 }
