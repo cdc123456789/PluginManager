@@ -1,4 +1,2 @@
-rootProject.name = 'DemoJavaPlugin'
+rootProject.name = 'PluginManager'
 
-include ":MCreator"
-project(":MCreator").projectDir = file(mcreator_path)

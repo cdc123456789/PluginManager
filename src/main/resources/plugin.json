@@ -1,15 +1,15 @@
 {
-  "id": "demo_java_plugin",
+  "id": "plugin_menu_cdc",
   "supportedversions": [
-    202600399999,
-    2026003
+    202600299999,
+    2026002
   ],
   "weight": 0,
-  "javaplugin": "net.mcreator.demojavaplugin.DemoJavaPlugin",
+  "javaplugin": "org.cdc.pluginmanager.PluginMain",
   "info": {
-    "name": "MCreator demo Java plugin",
-    "version": "1.0",
-    "description": "Demo Java plugin to demonstrate a typical Java plugin structure",
-    "author": "Pylo"
+    "name": "Plugin Menu",
+    "version": "${version}",
+    "description": "A plugin menu for mcreator",
+    "author": "cdc12345"
   }
 }

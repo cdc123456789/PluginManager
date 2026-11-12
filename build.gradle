@@ -57,7 +57,7 @@ processResources {
 }
 
 tasks.jar {
-    archiveFileName.set('plugin-generator-' + version + '.zip')
+    archiveFileName.set('plugin-manager-' + version + '.zip')
 
     from(project.configurations.jarInJar) {
         into 'META-INF/jarinjar'
