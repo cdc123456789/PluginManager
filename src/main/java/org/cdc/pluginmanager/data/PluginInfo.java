@@ -30,6 +30,7 @@ public class PluginInfo {
     public String description;
     /** 作者 */
     public String author;
+    public String credits;
 
     /* 运行时状态（不来自 plugin.json） */
     /** 是否为 MCreator 内置插件（随 MCreator 发行） */

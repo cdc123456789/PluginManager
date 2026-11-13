@@ -14,6 +14,7 @@ import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
@@ -605,6 +606,10 @@ public class PluginManagerPanel extends JPanel {
             body.add(Box.createVerticalStrut(4));
             body.add(techRow(L10NHelper.t("plugin.manager.detail.file"), plugin.filePath, true));
         }
+        if (!isBlank(plugin.credits)) {
+            body.add(Box.createVerticalStrut(4));
+            body.add(techRow(L10NHelper.t("plugin.manager.detail.credits"), plugin.credits, false));
+        }
 
         body.add(Box.createVerticalStrut(14));
         body.add(separator());
@@ -637,6 +642,13 @@ public class PluginManagerPanel extends JPanel {
         contentLabel.setFont(contentLabel.getFont().deriveFont(Font.PLAIN, 11f));
         contentLabel.setForeground(palette.text);
         contentLabel.setVerticalAlignment(SwingConstants.TOP);
+        contentLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                var content = new StringSelection(label + ": " + value);
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(content, content);
+            }
+        });
 
         row.add(key, BorderLayout.WEST);
         row.add(contentLabel, BorderLayout.CENTER);

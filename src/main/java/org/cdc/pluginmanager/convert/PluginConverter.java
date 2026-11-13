@@ -90,21 +90,25 @@ public final class PluginConverter {
             return null;
         }
         net.mcreator.plugin.PluginInfo source = plugin.getInfo();
+        if (source == null){
+            return null;
+        }
 
         PluginInfo target = new PluginInfo();
         target.id = plugin.getID();
         target.name = resolveName(plugin, source);
         target.version = resolveVersion(plugin, source);
-        target.description = source != null ? source.getDescription() : null;
-        target.author = source != null ? source.getAuthor() : null;
+        target.description = source.getDescription();
+        target.author = source.getAuthor();
         target.homepageUrl = resolveHomepage(source);
         target.weight = plugin.getWeight();
         target.javaPlugin = plugin.getJavaPlugin();
+        target.credits = source.getCredits();
 
         if (plugin.getSupportedVersions() != null) {
             target.supportedVersions.addAll(plugin.getSupportedVersions());
         }
-        if (source != null && source.getDependencies() != null) {
+        if (source.getDependencies() != null) {
             target.dependencies.addAll(source.getDependencies());
         }
 
